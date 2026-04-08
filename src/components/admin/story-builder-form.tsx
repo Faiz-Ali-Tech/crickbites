@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { getStoryByIdAction, updateStoryAction } from "@/app/actions/story.actions"
+import { getStoryByIdAction, updateStoryAction, createStoryAction } from "@/app/actions/story.actions"
 import { uploadAssetAction } from "@/app/actions/upload.actions"
+import { toast } from "sonner"
 import { WebStory } from "@/repositories/interfaces"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -67,10 +68,12 @@ function makeNewPage(): StoryPage {
 // ── Props ─────────────────────────────────────────────────────────────────────
 interface StoryBuilderProps {
   storyId: string
+  authorId?: string
 }
 
-export function StoryBuilderForm({ storyId }: StoryBuilderProps) {
+export function StoryBuilderForm({ storyId, authorId }: StoryBuilderProps) {
   const router = useRouter()
+  const isNew = storyId === "new"
 
   const [story, setStory]             = useState<WebStory | null>(null)
   const [loading, setLoading]         = useState(true)
@@ -96,6 +99,11 @@ export function StoryBuilderForm({ storyId }: StoryBuilderProps) {
 
   // ── Load story ──────────────────────────────────────────────────────────────
   useEffect(() => {
+    if (isNew) {
+      setLoading(false)
+      return
+    }
+
     getStoryByIdAction(storyId).then((res) => {
       if (res.success && res.data) {
         const s = res.data
@@ -194,21 +202,41 @@ export function StoryBuilderForm({ storyId }: StoryBuilderProps) {
   // ── Save ────────────────────────────────────────────────────────────────────
   async function handleSave(saveStatus: "draft" | "published") {
     setSaving(true)
-    const res = await updateStoryAction(storyId, {
+
+    const payload = {
       title,
-      slug,
+      slug: slug || undefined, // will auto-generate if empty and creating
       coverImageUrl: coverUrl,
       storyData: storyData as unknown as Parameters<typeof updateStoryAction>[1]["storyData"],
       status: saveStatus,
       publishedAt: saveStatus === "published" ? (new Date().toISOString() as unknown as Date) : undefined,
-    })
+    }
+
+    let res
+
+    if (isNew) {
+      if (!authorId) {
+        toast.error("Author ID is missing")
+        setSaving(false)
+        return
+      }
+      res = await createStoryAction({
+        ...payload,
+        authorId,
+      } as any) // Type coaxing for schema
+    } else {
+      res = await updateStoryAction(storyId, payload)
+    }
+
     if (res.success) {
+      toast.success("Saved!")
       router.push("/admin/stories")
       router.refresh()
     } else {
-      alert(res.error ?? "Save failed")
-      setSaving(false)
+      toast.error(res.error ?? "Save failed")
     }
+    
+    setSaving(false)
   }
 
   // ── Get bg layer url ────────────────────────────────────────────────────────
@@ -232,7 +260,7 @@ export function StoryBuilderForm({ storyId }: StoryBuilderProps) {
     )
   }
 
-  if (error || !story) {
+  if (error || (!isNew && !story)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-neutral-500">
         <AlertCircle className="h-10 w-10 text-red-500" />
@@ -261,7 +289,7 @@ export function StoryBuilderForm({ storyId }: StoryBuilderProps) {
           </button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Story Builder</h1>
-            <p className="text-neutral-500 text-sm">{story.title}</p>
+            <p className="text-neutral-500 text-sm">{isNew ? "New Web Story" : story?.title}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { toast } from "sonner"
 import { CreatePostSchema } from "@/lib/validations/backend.schema"
 import { createPostAction, updatePostAction } from "@/app/actions/post.actions"
 import { uploadAssetAction } from "@/app/actions/upload.actions"
@@ -195,12 +196,13 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
       : await createPostAction(payload)
 
     if (res.success) {
+      toast.success("Saved!")
       router.push("/admin/posts")
       router.refresh()
     } else {
-      alert(res.error ?? "An error occurred")
-      setIsSubmitting(false)
+      toast.error(res.error ?? "An error occurred")
     }
+    setIsSubmitting(false)
   }
 
   // ── Render ────────────────────────────────────────────────────────────────

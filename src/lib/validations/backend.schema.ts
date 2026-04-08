@@ -115,7 +115,7 @@ export const StoryPageSchema = z.object({
 
 export const StoryDataSchema = z.object({
   settings: z.object({
-    publisher_logo_url: z.string().url("Publisher logo must be a valid URL"),
+    publisher_logo_url: z.string().url("Publisher logo must be a valid URL").optional().or(z.literal("")),
     language: z.string().default("en"),
     auto_advance_duration: z.string().default("7s"),
   }),
