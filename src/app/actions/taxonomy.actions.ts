@@ -6,12 +6,12 @@ import {
   UpdateCategorySchema,
   CreateTagSchema,
   UpdateTagSchema,
-} from "@/lib/validations/backend.schema";
+} from "@/lib/validations/schema";
 import {
   CategoryRepository,
   TagRepository,
 } from "@/lib/repositories/taxonomy.repository";
-import { Category, Tag } from "@/repositories/interfaces";
+import { type Category, type Tag } from "@/db/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RESPONSE ENVELOPE TYPE

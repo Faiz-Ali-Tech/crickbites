@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { CreatePostSchema } from "@/lib/validations/backend.schema"
+import { CreatePostSchema } from "@/lib/validations/schema"
 import { createPostAction, updatePostAction } from "@/app/actions/post.actions"
 import { uploadAssetAction } from "@/app/actions/upload.actions"
 import { getCategoriesAction, getTagsAction, createCategoryAction, createTagAction } from "@/app/actions/taxonomy.actions"
@@ -68,7 +68,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitAction, setSubmitAction] = useState<"draft" | "published">("draft")
   const [showSEO, setShowSEO]           = useState(false)
-  const [featuredImage, setFeaturedImage] = useState<string | null>(post?.featuredImageUrl ?? null)
+  const [featuredImage, setFeaturedImage] = useState<string | null>(post?.featuredImage ?? null)
   const [imageUploading, setImageUploading] = useState(false)
 
   const [dbCategories, setDbCategories] = useState<Category[]>([])
@@ -91,7 +91,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
       slug:            post?.slug ?? "",
       content:         post?.content ?? "",
       excerpt:         post?.excerpt ?? "",
-      featuredImageUrl: post?.featuredImageUrl ?? "",
+      featuredImage: post?.featuredImage ?? "",
       status:          post?.status ?? "draft",
       categoryIds:     [],
       tagIds:          [],
@@ -134,7 +134,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
     if (res.success && res.data) {
       const url = res.data as string
       setFeaturedImage(url)
-      setValue("featuredImageUrl", url)
+      setValue("featuredImage", url)
     } else {
       alert(res.error ?? "Image upload failed")
     }
@@ -161,7 +161,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
   async function handleCreateCategory() {
     if (!newCategoryName.trim()) return
     setAddingCategory(true)
-    const res = await createCategoryAction({ name: newCategoryName.trim() })
+    const res = await createCategoryAction({ name: newCategoryName.trim(), slug: slugify(newCategoryName) })
     if (res.success && res.data) {
       setDbCategories((prev) => [...prev, res.data as Category])
       setValue("categoryIds", [...categoryIds, (res.data as Category).id])
@@ -175,7 +175,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
   async function handleCreateTag() {
     if (!newTagName.trim()) return
     setAddingTag(true)
-    const res = await createTagAction({ name: newTagName.trim() })
+    const res = await createTagAction({ name: newTagName.trim(), slug: slugify(newTagName) })
     if (res.success && res.data) {
       setDbTags((prev) => [...prev, res.data as Tag])
       setValue("tagIds", [...tagIds, (res.data as Tag).id])
@@ -193,7 +193,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
 
     const res = isEdit
       ? await updatePostAction(post!.id, { ...data, status: submitAction })
-      : await createPostAction(payload)
+      : await createPostAction(payload as any)
 
     if (res.success) {
       toast.success("Saved!")
@@ -283,7 +283,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
               <div className="grid gap-1.5 pt-4">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="seoTitle">Meta Title</Label>
-                  <CharCounter value={seoTitleVal} max={70} />
+                  <CharCounter value={seoTitleVal ?? ""} max={70} />
                 </div>
                 <Input
                   id="seoTitle"
@@ -296,7 +296,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
               <div className="grid gap-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="seoDescription">Meta Description</Label>
-                  <CharCounter value={seoDescVal} max={160} />
+                  <CharCounter value={seoDescVal ?? ""} max={160} />
                 </div>
                 <textarea
                   id="seoDescription"
@@ -385,7 +385,7 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
                   onClick={(e) => {
                     e.stopPropagation()
                     setFeaturedImage(null)
-                    setValue("featuredImageUrl", "")
+                    setValue("featuredImage", "")
                   }}
                   className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/60 flex items-center justify-center hover:bg-red-900/80 transition-colors"
                 >

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { UpdateProfileSchema } from "@/lib/validations/backend.schema";
+import { UpdateProfileSchema } from "@/lib/validations/schema";
 import { UserRepository } from "@/lib/repositories/user.repository";
 import { InferSelectModel } from "drizzle-orm";
 import { users } from "@/db/schema";

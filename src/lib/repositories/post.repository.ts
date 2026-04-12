@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { posts, postCategories, postTags } from "@/db/schema";
-import type { CreatePostInput, UpdatePostInput } from "@/lib/validations/backend.schema";
+import { CreatePostInput, UpdatePostInput } from "@/lib/validations/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Slug Generation
@@ -38,7 +38,7 @@ export class PostRepository {
           slug,
           content: data.content,
           excerpt: data.excerpt ?? null,
-          featuredImageUrl: data.featuredImageUrl || null,
+          featuredImage: data.featuredImage || null,
           readingTime: data.readingTime ?? null,
           status: data.status as "draft" | "published" | "scheduled",
           publishedAt: data.publishedAt ? new Date(data.publishedAt) : null,

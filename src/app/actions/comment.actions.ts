@@ -4,9 +4,9 @@ import { z } from "zod";
 import {
   CreateCommentSchema,
   UpdateCommentStatusSchema,
-} from "@/lib/validations/backend.schema";
+} from "@/lib/validations/schema";
 import { CommentRepository } from "@/lib/repositories/comment.repository";
-import { Comment } from "@/repositories/interfaces";
+import { type Comment } from "@/db/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RESPONSE ENVELOPE TYPE
@@ -32,7 +32,32 @@ export async function createCommentAction(
 ): Promise<ActionResponse<Comment>> {
   try {
     const validatedData = CreateCommentSchema.parse(input);
-    const comment = await CommentRepository.createComment(validatedData);
+    const { recaptchaToken, ...repoData } = validatedData;
+    
+    // 1. Verify reCAPTCHA token with Google
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    if (!secretKey) {
+      console.error("Missing RECAPTCHA_SECRET_KEY");
+      return { success: false, error: "Server configuration error" };
+    }
+
+    const verifyParams = new URLSearchParams();
+    verifyParams.append("secret", secretKey);
+    verifyParams.append("response", recaptchaToken);
+
+    const verifyResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: verifyParams.toString(),
+    });
+
+    const verifyData = await verifyResponse.json();
+    if (!verifyData.success || (verifyData.score !== undefined && verifyData.score < 0.5)) {
+      return { success: false, error: "Failed reCAPTCHA verification. You appear to be a bot." };
+    }
+
+    // 2. Proceed with DB insertion
+    const comment = await CommentRepository.createComment(repoData);
     return { success: true, data: comment };
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {

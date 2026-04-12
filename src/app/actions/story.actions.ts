@@ -4,9 +4,9 @@ import { z } from "zod";
 import {
   CreateStorySchema,
   UpdateStorySchema,
-} from "@/lib/validations/backend.schema";
+} from "@/lib/validations/schema";
 import { StoryRepository } from "@/lib/repositories/story.repository";
-import { WebStory } from "@/repositories/interfaces";
+import { type WebStory } from "@/db/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RESPONSE ENVELOPE TYPE
@@ -33,7 +33,7 @@ export async function createStoryAction(
 ): Promise<ActionResponse<WebStory>> {
   try {
     const validatedData = CreateStorySchema.parse(input);
-    const story = await StoryRepository.createStory(validatedData);
+    const story = await StoryRepository.createStory(validatedData as any);
     return { success: true, data: story };
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
@@ -65,7 +65,7 @@ export async function updateStoryAction(
     }
 
     const validatedData = UpdateStorySchema.parse(input);
-    const story = await StoryRepository.updateStory(id, validatedData);
+    const story = await StoryRepository.updateStory(id, validatedData as any);
 
     if (!story) {
       return { success: false, error: "Story not found" };

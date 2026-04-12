@@ -10,10 +10,13 @@ export default async function EditPostPage({
 }) {
   const { id } = await params
 
-  const [profileRes, post] = await Promise.all([
+  const results = await Promise.allSettled([
     getAdminProfileAction(),
     PostRepository.getPostById(id),
   ])
+
+  const profileRes = results[0].status === 'fulfilled' ? results[0].value : { success: false, data: null };
+  const post = results[1].status === 'fulfilled' ? results[1].value : null;
 
   if (!profileRes.success || !profileRes.data) {
     redirect("/login")

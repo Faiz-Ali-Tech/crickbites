@@ -4,9 +4,9 @@ import { z } from "zod";
 import {
   CreatePostSchema,
   UpdatePostSchema,
-} from "@/lib/validations/backend.schema";
+} from "@/lib/validations/schema";
 import { PostRepository } from "@/lib/repositories/post.repository";
-import { Post } from "@/repositories/interfaces";
+import { type Post } from "@/db/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RESPONSE ENVELOPE TYPE
@@ -32,7 +32,7 @@ export async function createPostAction(
 ): Promise<ActionResponse<Post>> {
   try {
     const validatedData = CreatePostSchema.parse(input);
-    const post = await PostRepository.createPost(validatedData);
+    const post = await PostRepository.createPost(validatedData as any);
     return { success: true, data: post };
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
@@ -64,7 +64,7 @@ export async function updatePostAction(
     }
 
     const validatedData = UpdatePostSchema.parse(input);
-    const post = await PostRepository.updatePost(id, validatedData);
+    const post = await PostRepository.updatePost(id, validatedData as any);
 
     if (!post) {
       return { success: false, error: "Post not found" };

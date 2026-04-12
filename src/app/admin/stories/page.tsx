@@ -131,9 +131,9 @@ export default function StoriesPage() {
                     {/* Cover thumbnail */}
                     <td className="px-6 py-4">
                       <div className="h-14 w-8 rounded overflow-hidden bg-neutral-800 shrink-0 flex items-center justify-center border border-neutral-700">
-                        {story.coverImageUrl ? (
+                        {story.coverImage ? (
                           <img
-                            src={story.coverImageUrl}
+                            src={story.coverImage}
                             alt={story.title}
                             className="h-full w-full object-cover"
                           />

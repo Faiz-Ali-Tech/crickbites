@@ -8,6 +8,13 @@
       "when": 1775015153563,
       "tag": "0000_fuzzy_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775993452012,
+      "tag": "0001_absent_invisible_woman",
+      "breakpoints": true
     }
   ]
 }

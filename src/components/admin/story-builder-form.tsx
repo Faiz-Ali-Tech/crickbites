@@ -111,7 +111,7 @@ export function StoryBuilderForm({ storyId, authorId }: StoryBuilderProps) {
         setTitle(s.title)
         setSlug(s.slug)
         setStatus(s.status as "draft" | "published" | "scheduled")
-        setCoverUrl(s.coverImageUrl ?? "")
+        setCoverUrl(s.coverImage ?? "")
         if (s.storyData) setStoryData(s.storyData as StoryData)
       } else {
         setError(res.error ?? "Story not found")
@@ -206,7 +206,7 @@ export function StoryBuilderForm({ storyId, authorId }: StoryBuilderProps) {
     const payload = {
       title,
       slug: slug || undefined, // will auto-generate if empty and creating
-      coverImageUrl: coverUrl,
+      coverImage: coverUrl,
       storyData: storyData as unknown as Parameters<typeof updateStoryAction>[1]["storyData"],
       status: saveStatus,
       publishedAt: saveStatus === "published" ? (new Date().toISOString() as unknown as Date) : undefined,

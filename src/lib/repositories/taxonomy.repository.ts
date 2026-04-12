@@ -1,6 +1,12 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { categories, tags } from "@/db/schema";
+import {
+  CreateCategoryInput,
+  UpdateCategoryInput,
+  CreateTagInput,
+  UpdateTagInput,
+} from "@/lib/validations/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Slug Generation
@@ -24,7 +30,7 @@ export class CategoryRepository {
    * Insert a new category row.
    * Auto-generates the slug from `name` if one is not provided.
    */
-  static async create(data: { name: string; slug?: string; description?: string }) {
+  static async create(data: CreateCategoryInput) {
     const slug = data.slug || generateSlug(data.name);
 
     const [newCategory] = await db
@@ -70,7 +76,7 @@ export class CategoryRepository {
    */
   static async update(
     id: string,
-    data: { name?: string; slug?: string; description?: string }
+    data: UpdateCategoryInput
   ) {
     const updateData: Record<string, unknown> = {};
 
@@ -119,7 +125,7 @@ export class TagRepository {
    * Insert a new tag row.
    * Auto-generates the slug from `name` if one is not provided.
    */
-  static async create(data: { name: string; slug?: string; description?: string }) {
+  static async create(data: CreateTagInput) {
     const slug = data.slug || generateSlug(data.name);
 
     const [newTag] = await db
@@ -165,7 +171,7 @@ export class TagRepository {
    */
   static async update(
     id: string,
-    data: { name?: string; slug?: string; description?: string }
+    data: UpdateTagInput
   ) {
     const updateData: Record<string, unknown> = {};
 

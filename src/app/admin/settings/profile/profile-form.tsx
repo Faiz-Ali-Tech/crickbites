@@ -10,28 +10,41 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { AlertCircle, CheckCircle2, Loader2, Camera } from "lucide-react"
 import { uploadAssetAction } from "@/app/actions/upload.actions"
+import { updateAdminProfileAction, getAdminProfileAction } from "@/app/actions/settings.actions"
+import { useEffect } from "react"
+import { toast } from "sonner"
+import { UpdateProfileSchema } from "@/lib/validations/schema"
 
-const profileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  bio: z.string().optional(),
-  avatarUrl: z.string().url().optional().or(z.literal("")),
-})
-
-type ProfileValues = z.infer<typeof profileSchema>
+type ProfileValues = z.infer<typeof UpdateProfileSchema>
 
 export function ProfileForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<ProfileValues>({
-    resolver: zodResolver(profileSchema),
+  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<ProfileValues>({
+    resolver: zodResolver(UpdateProfileSchema),
     defaultValues: {
-      name: "Super Admin",
-      bio: "CrickBites Lead Architect",
+      name: "",
+      bio: "",
       avatarUrl: "",
     },
   })
+
+  useEffect(() => {
+    async function loadProfile() {
+      const res = await getAdminProfileAction()
+      if (res.success && res.data) {
+        reset({
+          name: res.data.name,
+          bio: res.data.bio || "",
+          avatarUrl: res.data.avatarUrl || "",
+        })
+        if (res.data.avatarUrl) setAvatarPreview(res.data.avatarUrl)
+      }
+    }
+    loadProfile()
+  }, [reset])
 
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
      const file = e.target.files?.[0]
@@ -52,11 +65,16 @@ export function ProfileForm() {
   async function onSubmit(data: ProfileValues) {
     setIsLoading(true)
     setSuccess(false)
-    // Simulate updating profile in Drizzle DB
-    setTimeout(() => {
-      setIsLoading(false)
+    
+    const res = await updateAdminProfileAction(data)
+    setIsLoading(false)
+    
+    if (res.success) {
       setSuccess(true)
-    }, 1000)
+      toast.success("Profile updated successfully")
+    } else {
+      toast.error(res.error || "Failed to update profile")
+    }
   }
 
   return (

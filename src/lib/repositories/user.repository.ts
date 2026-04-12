@@ -1,10 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/db/schema";
-import { z } from "zod";
-import { UpdateProfileSchema } from "@/lib/validations/backend-schemas";
-
-type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;
+import { UpdateProfileInput } from "@/lib/validations/schema";
 
 export class UserRepository {
   static async updateProfile(userId: string, data: UpdateProfileInput) {

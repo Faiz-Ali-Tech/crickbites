@@ -1,8 +1,17 @@
-import { posts, categories, tags, webStories, comments, users } from "@/db/schema";
-import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import {
+  type Category,
+  type Comment,
+  type NewCategory,
+  type NewComment,
+  type NewPost,
+  type NewWebStory,
+  type NewTag,
+  type Post,
+  type Tag,
+  type WebStory,
+} from "@/db/schema";
 
-export type Post = InferSelectModel<typeof posts>;
-export type NewPost = InferInsertModel<typeof posts>;
+export type { Category, Comment, Post, WebStory, Tag, NewCategory, NewComment, NewPost, NewWebStory, NewTag };
 
 export interface IPostRepository {
   findById(id: string): Promise<Post | undefined>;
@@ -13,24 +22,15 @@ export interface IPostRepository {
   delete(id: string): Promise<void>;
 }
 
-export type Category = InferSelectModel<typeof categories>;
-export type NewCategory = InferInsertModel<typeof categories>;
-
 export interface ICategoryRepository {
   findAll(): Promise<Category[]>;
   create(data: NewCategory): Promise<Category>;
 }
 
-export type Tag = InferSelectModel<typeof tags>;
-export type NewTag = InferInsertModel<typeof tags>;
-
 export interface ITagRepository {
   findAll(): Promise<Tag[]>;
   create(data: NewTag): Promise<Tag>;
 }
-
-export type WebStory = InferSelectModel<typeof webStories>;
-export type NewWebStory = InferInsertModel<typeof webStories>;
 
 export interface IWebStoryRepository {
   findById(id: string): Promise<WebStory | undefined>;
@@ -38,9 +38,6 @@ export interface IWebStoryRepository {
   create(data: NewWebStory): Promise<WebStory>;
   update(id: string, data: Partial<NewWebStory>): Promise<WebStory>;
 }
-
-export type Comment = InferSelectModel<typeof comments>;
-export type NewComment = InferInsertModel<typeof comments>;
 
 export interface ICommentRepository {
   findAllByPostId(postId: string): Promise<Comment[]>;

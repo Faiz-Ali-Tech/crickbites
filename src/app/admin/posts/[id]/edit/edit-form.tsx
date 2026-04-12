@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { PostSchema } from "@/schemas/zod"
+import { CreatePostSchema } from "@/lib/validations/schema"
 import { updatePostAction } from "@/app/actions/post.actions"
 import { uploadAssetAction } from "@/app/actions/upload.actions"
 import { Button } from "@/components/ui/button"
@@ -18,16 +18,16 @@ export function EditPostForm({ post }: { post: any }) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showSEO, setShowSEO] = useState(false)
-  const [featuredImage, setFeaturedImage] = useState<string | null>(post.featuredImageUrl)
+  const [featuredImage, setFeaturedImage] = useState<string | null>(post.featuredImage)
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
-    resolver: zodResolver(PostSchema),
+    resolver: zodResolver(CreatePostSchema.omit({ authorId: true })),
     defaultValues: {
       title: post.title,
       slug: post.slug,
       content: post.content,
       excerpt: post.excerpt || "",
-      featuredImageUrl: post.featuredImageUrl || "",
+      featuredImage: post.featuredImage || "",
       status: post.status,
       categoryIds: [], // Would fetch from junction table in real app
       tagIds: [],
@@ -46,7 +46,7 @@ export function EditPostForm({ post }: { post: any }) {
      if (res.success) {
         const uploadedUrl = res.data as string
         setFeaturedImage(uploadedUrl)
-        setValue("featuredImageUrl", uploadedUrl)
+        setValue("featuredImage", uploadedUrl)
      }
   }
 

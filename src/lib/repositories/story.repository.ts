@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { webStories } from "@/db/schema";
-import type { CreateStoryInput, UpdateStoryInput } from "@/lib/validations/backend.schema";
+import { CreateStoryInput, UpdateStoryInput } from "@/lib/validations/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Slug Generation
@@ -35,7 +35,7 @@ export class StoryRepository {
       .values({
         title: data.title,
         slug,
-        coverImageUrl: data.coverImageUrl || null,
+        coverImage: data.coverImage || null,
         // storyData is typed as JSONB in the Drizzle schema.
         // Passing the plain object is correct — do NOT JSON.stringify().
         storyData: data.storyData,
@@ -68,8 +68,8 @@ export class StoryRepository {
       updatePayload.slug = data.slug;
     }
 
-    if (data.coverImageUrl !== undefined) {
-      updatePayload.coverImageUrl = data.coverImageUrl || null;
+    if (data.coverImage !== undefined) {
+      updatePayload.coverImage = data.coverImage || null;
     }
 
     if (data.storyData !== undefined) {

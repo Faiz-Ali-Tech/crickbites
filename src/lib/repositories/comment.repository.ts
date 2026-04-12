@@ -4,7 +4,7 @@ import { comments } from "@/db/schema";
 import type {
   CreateCommentInput,
   UpdateCommentStatusInput,
-} from "@/lib/validations/backend.schema";
+} from "@/lib/validations/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMMENT REPOSITORY
@@ -16,7 +16,7 @@ export class CommentRepository {
    * Status is ALWAYS forced to "pending" regardless of the caller's input —
    * the schema ensures this but we enforce it at the repository level too.
    */
-  static async createComment(data: CreateCommentInput) {
+  static async createComment(data: Omit<CreateCommentInput, "recaptchaToken">) {
     const [newComment] = await db
       .insert(comments)
       .values({
