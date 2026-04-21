@@ -1,5 +1,7 @@
 import { StoryBuilderForm } from "@/components/admin/story-builder-form"
 
+export const dynamic = 'force-dynamic'
+
 interface EditStoryPageProps {
   params: Promise<{ id: string }>
 }

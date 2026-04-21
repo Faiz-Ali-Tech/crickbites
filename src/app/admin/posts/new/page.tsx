@@ -2,6 +2,8 @@ import { PostEditorForm } from "@/components/admin/post-editor-form"
 import { getAdminProfileAction } from "@/app/actions/settings.actions"
 import { redirect } from "next/navigation"
 
+export const dynamic = 'force-dynamic'
+
 export default async function NewPostPage() {
   const profileRes = await getAdminProfileAction()
   console.log(profileRes);

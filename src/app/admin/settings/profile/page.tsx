@@ -1,5 +1,7 @@
 import { ProfileForm } from "./profile-form"
 
+export const dynamic = 'force-dynamic'
+
 export default function ProfileSettingsPage() {
   return (
     <div className="space-y-6">

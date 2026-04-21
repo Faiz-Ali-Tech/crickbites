@@ -66,7 +66,6 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
   const isEdit  = !!post
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitAction, setSubmitAction] = useState<"draft" | "published">("draft")
   const [showSEO, setShowSEO]           = useState(false)
   const [featuredImage, setFeaturedImage] = useState<string | null>(post?.featuredImage ?? null)
   const [imageUploading, setImageUploading] = useState(false)
@@ -189,10 +188,10 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
   // ── Submit ───────────────────────────────────────────────────────────────
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true)
-    const payload = { ...data, status: submitAction, authorId }
+    const payload = { ...data, authorId }
 
     const res = isEdit
-      ? await updatePostAction(post!.id, { ...data, status: submitAction })
+      ? await updatePostAction(post!.id, data)
       : await createPostAction(payload as any)
 
     if (res.success) {
@@ -335,12 +334,12 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
                 variant="outline"
                 className="flex-1 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
                 disabled={isSubmitting}
-                onClick={() => {
-                  setSubmitAction("draft")
-                  handleSubmit(onSubmit)()
+                onClick={async () => {
+                  setValue("status", "draft")
+                  await handleSubmit(onSubmit)()
                 }}
               >
-                {isSubmitting && submitAction === "draft" ? (
+                {isSubmitting && watch("status") === "draft" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <><Save className="h-4 w-4 mr-1.5" />Save Draft</>
@@ -350,12 +349,12 @@ export function PostEditorForm({ post, authorId }: PostEditorFormProps) {
                 type="button"
                 className="flex-1 bg-teal-600 hover:bg-teal-500 text-white"
                 disabled={isSubmitting}
-                onClick={() => {
-                  setSubmitAction("published")
-                  handleSubmit(onSubmit)()
+                onClick={async () => {
+                  setValue("status", "published")
+                  await handleSubmit(onSubmit)()
                 }}
               >
-                {isSubmitting && submitAction === "published" ? (
+                {isSubmitting && watch("status") === "published" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <><Send className="h-4 w-4 mr-1.5" />Publish</>

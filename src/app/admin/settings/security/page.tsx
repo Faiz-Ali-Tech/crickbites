@@ -1,5 +1,7 @@
 import { SecurityForm } from "./security-form"
 
+export const dynamic = 'force-dynamic'
+
 export default function SecuritySettingsPage() {
   return (
     <div className="space-y-6">

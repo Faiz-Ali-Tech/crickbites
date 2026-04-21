@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { comments } from "@/db/schema";
 import type {
@@ -52,7 +52,7 @@ export class CommentRepository {
     return db
       .select()
       .from(comments)
-      .where(eq(comments.postId, postId));
+      .where(and(eq(comments.postId, postId), eq(comments.status, "approved")));
   }
 
   /**

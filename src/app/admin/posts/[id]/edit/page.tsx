@@ -3,6 +3,8 @@ import { PostRepository } from "@/lib/repositories/post.repository"
 import { getAdminProfileAction } from "@/app/actions/settings.actions"
 import { notFound, redirect } from "next/navigation"
 
+export const dynamic = 'force-dynamic'
+
 export default async function EditPostPage({
   params,
 }: {
