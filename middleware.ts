@@ -9,10 +9,9 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
+        getAll: () => request.cookies.getAll(),
+
+        setAll: (cookiesToSet) => {
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });
@@ -23,22 +22,19 @@ export async function middleware(request: NextRequest) {
 
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser();
 
-  if (error) {
-    console.log("Auth Error:", error.message);
-  }
+  const path = request.nextUrl.pathname;
 
-  // 🔐 Protect /admin
-  if (!user && request.nextUrl.pathname.startsWith("/admin")) {
+  const protectedRoutes = ["/admin", "/new-post"];
+
+  if (!user && protectedRoutes.some((route) => path.startsWith(route))) {
     return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  // 🔁 Prevent logged-in users from visiting login
-  if (user && request.nextUrl.pathname.startsWith("/login")) {
-    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   return response;
 }
+
+export const config = {
+  matcher: ["/admin/:path*", "/new-post/:path*"],
+};
