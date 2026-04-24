@@ -93,7 +93,7 @@ export function LoginForm({
           </form>
           <div className="relative hidden bg-neutral-800 md:block">
             <img
-              src="https://images.unsplash.com/photo-1540747913346-19e3adca174f?auto=format&fit=crop&w=800&h=1200"
+              src="https://images.unsplash.com/photo-1470790376778-a9fbc86d70e2?w=500&h=1200&auto=format&fit=crop&q=60"
               alt="CrickBites Background"
               className="absolute inset-0 h-full w-full object-cover opacity-50 contrast-125"
             />

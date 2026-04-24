@@ -1,60 +1,87 @@
 import { BaseRepository } from "@/lib/db/base.repository";
 import { posts, postCategories, postTags } from "@/db/schema";
 import { db } from "@/lib/db";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export class PostRepository extends BaseRepository<typeof posts> {
   constructor() {
     super(posts);
   }
 
-  async createWithRelations(data: any, categoryIds: string[], tagIds: string[]) {
-    return await db.transaction(async (tx) => {
-      const [newPost] = await tx.insert(posts).values(data).returning();
+  // ✅ GET ALL POSTS
+  async getPosts() {
+    try {
+      console.log("📦 Fetching posts...");
 
-      if (categoryIds.length > 0) {
-        await tx.insert(postCategories).values(
-          categoryIds.map((id) => ({ postId: newPost.id, categoryId: id }))
-        );
-      }
+      const result = await db.query.posts.findMany({
+        with: {
+          author: true,
+          categories: {
+            with: {
+              category: true,
+            },
+          },
+          tags: {
+            with: {
+              tag: true,
+            },
+          },
+        },
+      });
 
-      if (tagIds.length > 0) {
-        await tx.insert(postTags).values(
-          tagIds.map((id) => ({ postId: newPost.id, tagId: id }))
-        );
-      }
+      console.log("✅ Posts fetched:", result);
 
-      return newPost;
+      return result;
+    } catch (error) {
+      console.log("❌ DB ERROR:", error);
+      throw error;
+    }
+  }
+
+  // ✅ CREATE POST
+  async createPost(data: any) {
+    const [post] = await db.insert(posts).values(data).returning();
+    return post;
+  }
+
+  // ✅ UPDATE POST
+  async updatePost(id: string, data: any) {
+    const [post] = await db
+      .update(posts)
+      .set(data)
+      .where(eq(posts.id, id))
+      .returning();
+
+    return post;
+  }
+
+  // ✅ DELETE POST
+  async deletePost(id: string) {
+    const [post] = await db
+      .delete(posts)
+      .where(eq(posts.id, id))
+      .returning();
+
+    return post;
+  }
+
+  // ✅ GET BY ID
+  async getPostById(id: string) {
+    return await db.query.posts.findFirst({
+      where: eq(posts.id, id),
+      with: {
+        author: true,
+      },
     });
   }
 
-  async updateWithRelations(id: string, data: any, categoryIds?: string[], tagIds?: string[]) {
-    return await db.transaction(async (tx) => {
-      const [updatedPost] = await tx
-        .update(posts)
-        .set(data)
-        .where(eq(posts.id, id))
-        .returning();
-
-      if (categoryIds !== undefined) {
-        await tx.delete(postCategories).where(eq(postCategories.postId, id));
-        if (categoryIds.length > 0) {
-          await tx.insert(postCategories).values(
-            categoryIds.map((catId) => ({ postId: id, categoryId: catId }))
-          );
-        }
-      }
-
-      if (tagIds !== undefined) {
-        await tx.delete(postTags).where(eq(postTags.postId, id));
-        if (tagIds.length > 0) {
-          await tx.insert(postTags).values(
-            tagIds.map((tagId) => ({ postId: id, tagId: tagId }))
-          );
-        }
-      }
-
-      return updatedPost;
+  // ✅ GET BY SLUG
+  async getPostBySlug(slug: string) {
+    return await db.query.posts.findFirst({
+      where: eq(posts.slug, slug),
+      with: {
+        author: true,
+      },
     });
   }
 }

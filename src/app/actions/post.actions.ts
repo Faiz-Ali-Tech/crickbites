@@ -5,12 +5,12 @@ import {
   CreatePostSchema,
   UpdatePostSchema,
 } from "@/lib/validations/schema";
-import { PostRepository } from "@/lib/repositories/post.repository";
+// correct path use karo
+import { PostRepository } from "@/repositories/post.repository";
 import { type Post } from "@/db/schema";
+import { createSupabaseClient } from "@/lib/supabase-server";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RESPONSE ENVELOPE TYPE
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
 
 type ActionResponse<T = unknown> = {
   success: boolean;
@@ -18,21 +18,35 @@ type ActionResponse<T = unknown> = {
   error?: string;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST ACTIONS
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// CREATE POST
+// ─────────────────────────────────────────────
 
-/**
- * Create a new blog post.
- * Runs inside a DB transaction (post + junction rows).
- * Slug is auto-generated from `title` if not provided.
- */
 export async function createPostAction(
   input: z.infer<typeof CreatePostSchema>
 ): Promise<ActionResponse<Post>> {
   try {
     const validatedData = CreatePostSchema.parse(input);
-    const post = await PostRepository.createPost(validatedData as any);
+
+    const supabase = await createSupabaseClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const repo = new PostRepository();
+
+    const { authorId, ...rest } = validatedData as any;
+
+
+const post = await repo.createPost({
+  ...rest,
+  authorId: user.id,
+});
+
     return { success: true, data: post };
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
@@ -43,28 +57,80 @@ export async function createPostAction(
           error.issues.map((e) => e.message).join(", "),
       };
     }
-    const message =
-      error instanceof Error ? error.message : "Failed to create post";
-    return { success: false, error: message };
+
+    console.log("❌ CREATE ERROR:", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create post",
+    };
   }
 }
 
-/**
- * Update an existing blog post by ID.
- * All fields are partial — only supplied fields are written.
- * Providing `categoryIds` or `tagIds` replaces the existing junction rows.
- */
+// ─────────────────────────────────────────────
+// GET ALL POSTS
+// ─────────────────────────────────────────────
+
+export async function getPostsAction(): Promise<ActionResponse<Post[]>> {
+  try {
+    const repo = new PostRepository();
+
+    const posts = await repo.getPosts();
+
+    return { success: true, data: posts };
+  } catch (error: unknown) {
+    console.log("❌ FETCH ERROR:", error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch posts",
+    };
+  }
+}
+
+// ─────────────────────────────────────────────
+// GET BY ID
+// ─────────────────────────────────────────────
+
+export async function getPostByIdAction(
+  id: string
+): Promise<ActionResponse<Post>> {
+  try {
+    if (!id) {
+      return { success: false, error: "Post ID is required" };
+    }
+
+    const repo = new PostRepository();
+
+    const post = await repo.getPostById(id);
+
+    if (!post) {
+      return { success: false, error: "Post not found" };
+    }
+
+    return { success: true, data: post };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch post",
+    };
+  }
+}
+
+// ─────────────────────────────────────────────
+// UPDATE
+// ─────────────────────────────────────────────
+
 export async function updatePostAction(
   id: string,
   input: z.infer<typeof UpdatePostSchema>
 ): Promise<ActionResponse<Post>> {
   try {
-    if (!id) {
-      return { success: false, error: "Post ID is required" };
-    }
-
     const validatedData = UpdatePostSchema.parse(input);
-    const post = await PostRepository.updatePost(id, validatedData as any);
+
+    const repo = new PostRepository();
+
+    const post = await repo.updatePost(id, validatedData);
 
     if (!post) {
       return { success: false, error: "Post not found" };
@@ -72,69 +138,24 @@ export async function updatePostAction(
 
     return { success: true, data: post };
   } catch (error: unknown) {
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error:
-          "Validation failed: " +
-          error.issues.map((e) => e.message).join(", "),
-      };
-    }
-    const message =
-      error instanceof Error ? error.message : "Failed to update post";
-    return { success: false, error: message };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update post",
+    };
   }
 }
 
-/**
- * Fetch all blog posts.
- */
-export async function getPostsAction(): Promise<ActionResponse<Post[]>> {
-  try {
-    const posts = await PostRepository.getPosts();
-    return { success: true, data: posts };
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch posts";
-    return { success: false, error: message };
-  }
-}
+// ─────────────────────────────────────────────
+// DELETE
+// ─────────────────────────────────────────────
 
-/**
- * Fetch a single blog post by its UUID.
- */
-export async function getPostByIdAction(id: string): Promise<ActionResponse<Post>> {
-  try {
-    if (!id) {
-      return { success: false, error: "Post ID is required" };
-    }
-
-    const post = await PostRepository.getPostById(id);
-
-    if (!post) {
-      return { success: false, error: "Post not found" };
-    }
-
-    return { success: true, data: post };
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch post";
-    return { success: false, error: message };
-  }
-}
-
-/**
- * Fetch a single blog post by its slug.
- */
-export async function getPostBySlugAction(
-  slug: string
+export async function deletePostAction(
+  id: string
 ): Promise<ActionResponse<Post>> {
   try {
-    if (!slug) {
-      return { success: false, error: "Slug is required" };
-    }
+    const repo = new PostRepository();
 
-    const post = await PostRepository.getPostBySlug(slug);
+    const post = await repo.deletePost(id);
 
     if (!post) {
       return { success: false, error: "Post not found" };
@@ -142,32 +163,9 @@ export async function getPostBySlugAction(
 
     return { success: true, data: post };
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch post";
-    return { success: false, error: message };
-  }
-}
-
-/**
- * Hard-delete a blog post by ID.
- * Removes category and tag junction rows inside the same transaction.
- */
-export async function deletePostAction(id: string): Promise<ActionResponse<Post>> {
-  try {
-    if (!id) {
-      return { success: false, error: "Post ID is required" };
-    }
-
-    const deletedPost = await PostRepository.deletePost(id);
-
-    if (!deletedPost) {
-      return { success: false, error: "Post not found" };
-    }
-
-    return { success: true, data: deletedPost };
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to delete post";
-    return { success: false, error: message };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to delete post",
+    };
   }
 }
