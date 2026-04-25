@@ -9,13 +9,14 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
+        get(name: string) {
+          return request.cookies.get(name)?.value;
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
+        set(name: string, value: string, options: any) {
+          response.cookies.set({ name, value, ...options });
+        },
+        remove(name: string, options: any) {
+          response.cookies.set({ name, value: "", ...options });
         },
       },
     }
@@ -30,15 +31,19 @@ export async function middleware(request: NextRequest) {
     console.log("Auth Error:", error.message);
   }
 
-  
+  // 🔐 Protect /admin
   if (!user && request.nextUrl.pathname.startsWith("/admin")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  
+  // 🔁 Prevent logged-in users from visiting login
   if (user && request.nextUrl.pathname.startsWith("/login")) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   return response;
 }
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
