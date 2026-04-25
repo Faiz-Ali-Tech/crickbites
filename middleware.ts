@@ -22,15 +22,12 @@ export async function middleware(request: NextRequest) {
     }
   );
 
- const {
+  // 🔥 CHANGE HERE
+  const {
     data: { session },
   } = await supabase.auth.getSession();
 
   const user = session?.user;
-
-  if (error) {
-    console.log("Auth Error:", error.message);
-  }
 
   // 🔐 Protect /admin
   if (!user && request.nextUrl.pathname.startsWith("/admin")) {
