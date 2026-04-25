@@ -87,12 +87,6 @@ export async function updateAdminProfileAction(
  *
  * Useful for pre-populating the profile settings form on the admin panel.
  */
-
-/**
- * Fetch the authenticated admin's profile from the `crickbites.users` table.
- *
- * Useful for pre-populating the profile settings form on the admin panel.
- */
 export async function getAdminProfileAction(): Promise<ActionResponse<User>> {
   try {
     const { createSupabaseServer } = await import("@/lib/supabase-ssr");
@@ -122,6 +116,4 @@ export async function getAdminProfileAction(): Promise<ActionResponse<User>> {
       error instanceof Error ? error.message : "Failed to fetch profile";
     return { success: false, error: message };
   }
-} ye hai
-
-
+} 
