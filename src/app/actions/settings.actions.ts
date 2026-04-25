@@ -87,33 +87,48 @@ export async function updateAdminProfileAction(
  *
  * Useful for pre-populating the profile settings form on the admin panel.
  */
-export async function getAdminProfileAction(): Promise<ActionResponse<User>> {
+
+
+export async function getAdminProfileAction() {
   try {
     const { createSupabaseServer } = await import("@/lib/supabase-ssr");
     const supabase = await createSupabaseServer();
 
     const {
       data: { user },
-      error: authError,
+      error,
     } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return { success: false, error: "Unauthorized: you must be signed in" };
+    console.log("SUPABASE USER:", user);
+
+    if (error || !user) {
+      return { success: false, error: "Unauthorized" };
     }
 
-    const profile = await UserRepository.getUserById(user.id);
+    // ✅ instance create karo
+    const userRepo = new UserRepository();
 
+    // 🔍 DB check
+    let profile = await userRepo.findById(user.id);
+
+    console.log("DB PROFILE:", profile);
+
+   
     if (!profile) {
-      return {
-        success: false,
-        error: "Profile not found — ensure the user row exists in crickbites.users",
-      };
+      console.log("CREATING USER...");
+
+      profile = await userRepo.create({
+        id: user.id,
+        email: user.email!,
+        name: user.user_metadata?.name || "Admin",
+        avatar_url: user.user_metadata?.avatar_url || null,
+        bio: null,
+      });
     }
 
     return { success: true, data: profile };
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch profile";
-    return { success: false, error: message };
+  } catch (err) {
+    console.error("PROFILE ERROR:", err);
+    return { success: false, error: "Failed to fetch profile" };
   }
 }
