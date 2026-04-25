@@ -88,47 +88,40 @@ export async function updateAdminProfileAction(
  * Useful for pre-populating the profile settings form on the admin panel.
  */
 
-
-export async function getAdminProfileAction() {
+/**
+ * Fetch the authenticated admin's profile from the `crickbites.users` table.
+ *
+ * Useful for pre-populating the profile settings form on the admin panel.
+ */
+export async function getAdminProfileAction(): Promise<ActionResponse<User>> {
   try {
     const { createSupabaseServer } = await import("@/lib/supabase-ssr");
     const supabase = await createSupabaseServer();
 
     const {
       data: { user },
-      error,
+      error: authError,
     } = await supabase.auth.getUser();
 
-    console.log("SUPABASE USER:", user);
-
-    if (error || !user) {
-      return { success: false, error: "Unauthorized" };
+    if (authError || !user) {
+      return { success: false, error: "Unauthorized: you must be signed in" };
     }
 
-    // ✅ instance create karo
-    const userRepo = new UserRepository();
+    const profile = await UserRepository.getUserById(user.id);
 
-    // 🔍 DB check
-    let profile = await userRepo.findById(user.id);
-
-    console.log("DB PROFILE:", profile);
-
-   
     if (!profile) {
-      console.log("CREATING USER...");
-
-      profile = await userRepo.create({
-        id: user.id,
-        email: user.email!,
-        name: user.user_metadata?.name || "Admin",
-        avatar_url: user.user_metadata?.avatar_url || null,
-        bio: null,
-      });
+      return {
+        success: false,
+        error: "Profile not found — ensure the user row exists in crickbites.users",
+      };
     }
 
     return { success: true, data: profile };
-  } catch (err) {
-    console.error("PROFILE ERROR:", err);
-    return { success: false, error: "Failed to fetch profile" };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch profile";
+    return { success: false, error: message };
   }
-}
+} ye hai
+
+
