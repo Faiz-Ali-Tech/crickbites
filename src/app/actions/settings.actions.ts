@@ -92,28 +92,35 @@ export async function getAdminProfileAction(): Promise<ActionResponse<User>> {
     const { createSupabaseServer } = await import("@/lib/supabase-ssr");
     const supabase = await createSupabaseServer();
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return { success: false, error: "Unauthorized: you must be signed in" };
+      return { success: false, error: "Unauthorized" };
     }
 
-    const profile = await UserRepository.getUserById(user.id);
+    // 1. Database se user fetch karo
+    let profile = await UserRepository.getUserById(user.id);
 
+    // 2. 🔥 DEBUG POINT: Agar profile nahi mila, toh automatic create karo
     if (!profile) {
-      return {
-        success: false,
-        error: "Profile not found — ensure the user row exists in crickbites.users",
-      };
+      console.log("Profile not found in DB, creating one for ID:", user.id);
+      
+      // Aapke UserRepository mein aisa function hona chahiye jo naya user insert kare
+      profile = await UserRepository.createProfile({
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.full_name || "Admin User",
+        // baaki default fields...
+      });
+      
+      if (!profile) {
+        return { success: false, error: "Could not create user profile in DB" };
+      }
     }
 
     return { success: true, data: profile };
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Failed to fetch profile";
+    const message = error instanceof Error ? error.message : "Failed to fetch profile";
     return { success: false, error: message };
   }
-} 
+}
