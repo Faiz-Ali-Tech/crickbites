@@ -3,6 +3,7 @@ import { getAdminProfileAction } from "@/app/actions/settings.actions"
 import { redirect } from "next/navigation"
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs' 
 
 export default async function NewPostPage() {
   const profileRes = await getAdminProfileAction()
