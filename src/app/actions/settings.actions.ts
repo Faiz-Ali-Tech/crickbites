@@ -99,6 +99,7 @@ export async function getAdminProfileAction(): Promise<ActionResponse<User>> {
 
     if (authError || !user) {
       return { success: false, error: "Unauthorized: you must be signed in" };
+     
     }
 
     const profile = await UserRepository.getUserById(user.id);
